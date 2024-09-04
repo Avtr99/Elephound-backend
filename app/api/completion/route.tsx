@@ -19,32 +19,20 @@ export async function POST(req: Request) {
 
 
 async function handleRequest(req: Request) {
-  let body: any;
-  try {
-    body = await req.json();
-    console.log("Request body:", body);
-  } catch (error) {
-    console.log("JSON Parsing Error:", error);
-    return new Response('Invalid JSON in request body', { status: 400 });
-  }
+  const body = await req.json();
   const sessionId = await extractSessionId(req, body);
+
   if (!sessionId) {
-    console.log("Invalid or missing session ID");
     return new Response('Session ID not provided', { status: 400 });
   }
 
   const storageUnits = await getStorageUnits(sessionId);
-  if (!storageUnits) {
-    return new Response('Could not retrieve storage units', { status: 500 });
-  }
+  console.log("units für sessionid: ", sessionId, " - ", storageUnits)
 
   const user_message = await extractParam(req, body, "message");
-  if (!user_message) {
-    console.log("Missing or empty message");
-    return new Response('Message not provided', { status: 400 });
-  }
-  const system_prompt = `You are a helpful AI assistant and help user to search for items in their storage units.`;
 
+  const system_prompt = `You are an helpful AI assistant and help user to search for items in their storage units. 
+        `;
   const input_prompt = `Classify user intent of the following request:
   ---
   `+ user_message + `
@@ -64,36 +52,19 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
         `+ JSON.stringify(storageUnits);
 
   console.log("message: ", input_prompt);
-  console.log("System Prompt:", system_prompt);
-  console.log("Input Prompt:", input_prompt);
 
-  let object;
-  try {
-    const result = await generateObject({
-        model: openai('gpt-4o'),
-        schema: z.object({
-            chat_response: z.string(),
-            user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
-            storageunit_ids: z.array(z.string())
+  const { object } = await generateObject({
+    model: openai('gpt-4o'),
+    schema: z.object({
+      chat_response: z.string()/*.describe("response text from ")*/,
+      user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
+      storageunit_ids: z.array(z.string()).describe("id of storage units containing items the user looks for")
     }),
-    
     system: system_prompt,
     prompt: input_prompt,
   });
-  console.log("Raw response from generateObject:", result);
-    // Attempt to parse the JSON safely
-  try {
-    object = result.object;
-    console.log("Parsed object:", object);
-  } catch (parseError) {
-    console.error("JSON Parsing Error:", parseError);
-    return new Response('Error parsing JSON from AI model', { status: 500 });
-  }
 
-} catch (apiError) {
-  console.error("Error generating AI response:", apiError);
-  return new Response('Error generating response from AI model', { status: 500 });
-}
+  console.log(object);
 
   const selectedUnits: StorageUnit[] = [];
   const suPromises = object.storageunit_ids.map(async (suId) => {
@@ -113,9 +84,7 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
 
   console.log(response);
 
-  return new Response(JSON.stringify(response), {
-    headers: { 'Cache-Control': 's-maxage=86400' } // Cache for 24 hours
-  });
+  return Response.json(response);
 }
 
 
