@@ -19,20 +19,26 @@ export async function POST(req: Request) {
 
 
 async function handleRequest(req: Request) {
-  const body = await req.json();
-  const sessionId = await extractSessionId(req, body);
+  let body: any;
+  try {
+    body = await req.json();
+  } catch (error) {
+    return new Response('Invalid JSON in request body', { status: 400 });
+  }
 
+  const sessionId = await extractSessionId(req, body);
   if (!sessionId) {
     return new Response('Session ID not provided', { status: 400 });
   }
 
   const storageUnits = await getStorageUnits(sessionId);
-  console.log("units für sessionid: ", sessionId, " - ", storageUnits)
+  if (!storageUnits) {
+    return new Response('Could not retrieve storage units', { status: 500 });
+  }
 
   const user_message = await extractParam(req, body, "message");
+  const system_prompt = `You are a helpful AI assistant and help user to search for items in their storage units.`;
 
-  const system_prompt = `You are an helpful AI assistant and help user to search for items in their storage units. 
-        `;
   const input_prompt = `Classify user intent of the following request:
   ---
   `+ user_message + `
@@ -53,18 +59,24 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
 
   console.log("message: ", input_prompt);
 
-  const { object } = await generateObject({
-    model: openai('gpt-4o'),
-    schema: z.object({
-      chat_response: z.string()/*.describe("response text from ")*/,
-      user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
-      storageunit_ids: z.array(z.string()).describe("id of storage units containing items the user looks for")
-    }),
-    system: system_prompt,
-    prompt: input_prompt,
-  });
+  let object;
+  try {
+    const result = await generateObject({
+      model: openai('gpt-4o'), // Ensure this is correct
+      schema: z.object({
+        chat_response: z.string(),
+        user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
+        storageunit_ids: z.array(z.string())
+      }),
+      system: system_prompt,
+      prompt: input_prompt,
+    });
+    object = result.object;
+  } catch (error) {
+    console.error("Error generating AI response:", error);
+    return new Response('Error generating response from AI model', { status: 500 });
+  }
 
-  console.log(object);
 
   const selectedUnits: StorageUnit[] = [];
   const suPromises = object.storageunit_ids.map(async (suId) => {
