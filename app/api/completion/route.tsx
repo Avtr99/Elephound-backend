@@ -22,12 +22,14 @@ async function handleRequest(req: Request) {
   let body: any;
   try {
     body = await req.json();
+    console.log("Request body:", body);
   } catch (error) {
+    console.log("JSON Parsing Error:", error);
     return new Response('Invalid JSON in request body', { status: 400 });
   }
-
   const sessionId = await extractSessionId(req, body);
   if (!sessionId) {
+    console.log("Invalid or missing session ID");
     return new Response('Session ID not provided', { status: 400 });
   }
 
@@ -37,6 +39,10 @@ async function handleRequest(req: Request) {
   }
 
   const user_message = await extractParam(req, body, "message");
+  if (!user_message) {
+    console.log("Missing or empty message");
+    return new Response('Message not provided', { status: 400 });
+  }
   const system_prompt = `You are a helpful AI assistant and help user to search for items in their storage units.`;
 
   const input_prompt = `Classify user intent of the following request:
@@ -58,6 +64,8 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
         `+ JSON.stringify(storageUnits);
 
   console.log("message: ", input_prompt);
+  console.log("System Prompt:", system_prompt);
+  console.log("Input Prompt:", input_prompt);
 
   let object;
   try {
@@ -96,7 +104,9 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
 
   console.log(response);
 
-  return Response.json(response);
+  return new Response(JSON.stringify(response), {
+    headers: { 'Cache-Control': 's-maxage=86400' } // Cache for 24 hours
+  });
 }
 
 
