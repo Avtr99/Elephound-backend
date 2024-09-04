@@ -70,21 +70,30 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
   let object;
   try {
     const result = await generateObject({
-      model: openai('gpt-4o'), // Ensure this is correct
-      schema: z.object({
-        chat_response: z.string(),
-        user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
-        storageunit_ids: z.array(z.string())
-      }),
-      system: system_prompt,
-      prompt: input_prompt,
-    });
+        model: openai('gpt-4o'),
+        schema: z.object({
+            chat_response: z.string(),
+            user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
+            storageunit_ids: z.array(z.string())
+    }),
+    
+    system: system_prompt,
+    prompt: input_prompt,
+  });
+  console.log("Raw response from generateObject:", result);
+    // Attempt to parse the JSON safely
+  try {
     object = result.object;
-  } catch (error) {
-    console.error("Error generating AI response:", error);
-    return new Response('Error generating response from AI model', { status: 500 });
+    console.log("Parsed object:", object);
+  } catch (parseError) {
+    console.error("JSON Parsing Error:", parseError);
+    return new Response('Error parsing JSON from AI model', { status: 500 });
   }
 
+} catch (apiError) {
+  console.error("Error generating AI response:", apiError);
+  return new Response('Error generating response from AI model', { status: 500 });
+}
 
   const selectedUnits: StorageUnit[] = [];
   const suPromises = object.storageunit_ids.map(async (suId) => {
