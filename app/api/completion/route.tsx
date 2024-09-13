@@ -54,7 +54,7 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
   console.log("message: ", input_prompt);
 
   const { object } = await generateObject({
-    model: openai('gpt-4o'),
+    model: openai('gpt-4o-2024-08-06'),
     schema: z.object({
       chat_response: z.string()/*.describe("response text from ")*/,
       user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
