@@ -19,9 +19,9 @@ export async function POST(req: Request) {
 
 
 async function handleRequest(req: Request) {
-  
+  let body
   try {
-        const body = await req.json();
+        body = await req.json();
 
         console.log("Parsed JSON body:", body);
     } catch (error) {
