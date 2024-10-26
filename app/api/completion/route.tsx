@@ -19,8 +19,8 @@ export async function POST(req: Request) {
 
 
 async function handleRequest(req: Request) {
-  let body
-  try {
+  //let body
+  /*try {
         body = await req.json();
 
         console.log("Parsed JSON body:", body);
@@ -29,7 +29,23 @@ async function handleRequest(req: Request) {
         console.log("Failed to parse JSON:", error);
        
        
+    } */
+    let bodyText: string;
+    let body: any;
+
+    try {
+        // Get the raw text body
+        bodyText = await req.text();
+        console.log("Raw body text:", bodyText);
+
+        // Attempt to parse the text as JSON
+        body = JSON.parse(bodyText);
+        console.log("Parsed JSON body:", body);
+    } catch (error) {
+        console.error("Failed to parse JSON:", error);
+    
     }
+
   const sessionId = await extractSessionId(req, body);
 
   if (!sessionId) {
