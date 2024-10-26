@@ -35,7 +35,7 @@ async function handleRequest(req: Request) {
 
     try {
         // Get the raw text body
-        bodyText = await req.text();
+        bodyText = await req.json();
         console.log("Raw body text:", bodyText);
 
         // Attempt to parse the text as JSON
