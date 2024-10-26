@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 // Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function GET(req: Request) {
   return await handleRequest(req);
@@ -19,7 +19,16 @@ export async function POST(req: Request) {
 
 
 async function handleRequest(req: Request) {
-  const body = await req.json();
+  
+  try {
+        const body = await req.json();
+
+        console.log("Parsed JSON body:", body);
+    } catch (error) {
+        console.error("Failed to parse JSON:", error);
+
+       
+    }
   const sessionId = await extractSessionId(req, body);
 
   if (!sessionId) {
