@@ -25,8 +25,9 @@ async function handleRequest(req: Request) {
 
         console.log("Parsed JSON body:", body);
     } catch (error) {
-        console.error("Failed to parse JSON:", error);
-
+        console.log("Parsed JSON body:", body);
+        console.log("Failed to parse JSON:", error);
+       
        
     }
   const sessionId = await extractSessionId(req, body);
