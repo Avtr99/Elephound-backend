@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
 // Allow streaming responses up to 30 seconds
-export const maxDuration = 60;
+export const maxDuration = 30;
 
 export async function GET(req: Request) {
   return await handleRequest(req);
@@ -19,33 +19,7 @@ export async function POST(req: Request) {
 
 
 async function handleRequest(req: Request) {
-  //let body
-  /*try {
-        body = await req.json();
-
-        console.log("Parsed JSON body:", body);
-    } catch (error) {
-        console.log("Parsed JSON body:", body);
-        console.log("Failed to parse JSON:", error);
-       
-       
-    } */
-    let bodyText: string;
-    let body: any;
-
-    try {
-        // Get the raw text body
-        bodyText = await req.json();
-        console.log("Raw body text:", bodyText);
-
-        // Attempt to parse the text as JSON
-        body = JSON.parse(bodyText);
-        console.log("Parsed JSON body:", body);
-    } catch (error) {
-        console.error("Failed to parse JSON:", error);
-    
-    }
-
+  const body = await req.json();
   const sessionId = await extractSessionId(req, body);
 
   if (!sessionId) {
@@ -80,7 +54,7 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
   console.log("message: ", input_prompt);
 
   const { object } = await generateObject({
-    model: openai('gpt-4o-2024-08-06'),
+    model: openai('gpt-4o'),
     schema: z.object({
       chat_response: z.string()/*.describe("response text from ")*/,
       user_intent: z.enum(["SEARCH_ITEMS", "CHAT"]),
@@ -112,5 +86,3 @@ Give a proper, friendly and funny chat_response to the user with maximum of 12 w
 
   return Response.json(response);
 }
-
-
